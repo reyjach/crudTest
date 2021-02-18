@@ -1,7 +1,8 @@
-
 import React ,{Component} from 'react';
 import ListTasks from './component/ListTasks';
 import CreateTask from './component/CreateTask';
+
+import { addDocument, deleteDocument, getCollection, updateDocument } from './actions';
 
 class App extends Component {
 
@@ -11,18 +12,45 @@ class App extends Component {
     editTask: []
   } 
 
-   addTask = (newTask) => {
+  async componentDidMount() {
+    const result = await getCollection("tasks");
+      if (result.statusResponse){
+        this.setState({
+          tasks: result.data
+        })
+    }
+  }
+
+   addTask = async(newTask) => {
     
     const tasks = [...this.state.tasks, newTask]
+
+    const result = await addDocument("tasks", {name: newTask.name});
+
+    if (!result.statusResponse){
+      
+      return
+    }
+
+    const task = [...this.state.tasks, { id: result.data.id, name: newTask.name }]
                                               
     this.setState ({
-      tasks
+      tasks: task
     })
     
   }
 
-   delateTask = (id) => {
+   delateTask = async(id) => {
     const tasksNow = [...this.state.tasks];
+
+    
+
+    const result = await deleteDocument("tasks", id);
+
+    if(!result.statusResponse){
+      
+      return
+    }
 
     const tasks = tasksNow.filter(task => task.id !== id); 
           
@@ -40,10 +68,17 @@ class App extends Component {
 
   }
 
-  saveTask = (task, id) => {
+  saveTask = async(task, id) => {
 
     const tasksNow = [...this.state.tasks];
     const editedTasks = tasksNow.map(item => item.id === id? {id, name: task}: item );
+
+    const result = await updateDocument("tasks", id, {name: task });
+
+    if(!result.statusResponse){
+
+      return
+    }
 
     this.setState({
       tasks: editedTasks,
@@ -86,3 +121,4 @@ class App extends Component {
 }
 
 export default App;
+
